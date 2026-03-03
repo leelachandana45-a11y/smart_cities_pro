@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Snow Road Risk Map</title>
+
+    <!-- Leaflet CSS -->
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+
+    <style>
+        #map {
+            height: 100vh;
+        }
+    </style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+    // Initialize map
+    var map = L.map('map').setView([13.0827, 80.2707], 10);
+
+    // Add map tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    // Fetch backend data
+    fetch("http://127.0.0.1:8000/all-data")
+        .then(response => response.json())
+        .then(data => {
+
+            data.forEach(point => {
+
+                let color;
+
+                if (point.risk_level === "HIGH") {
+                    color = "red";
+                } else if (point.risk_level === "MEDIUM") {
+                    color = "orange";
+                } else {
+                    color = "green";
+                }
+
+                L.circleMarker([point.latitude, point.longitude], {
+                    radius: 8,
+                    color: color,
+                    fillOpacity: 0.8
+                })
+                .addTo(map)
+                .bindPopup(
+                    "Friction: " + point.friction.toFixed(2) +
+                    "<br>Risk: " + point.risk_level
+                );
+
+            });
+
+        });
+</script>
+
+</body>
+</html>
