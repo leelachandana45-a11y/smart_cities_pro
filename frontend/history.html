@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Risk History | Smart Cities Pro</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #050505;
+            --surface-color: #121212;
+            --primary-color: #007AFF;
+            --secondary-color: #32D74B;
+            --risk-high: #FF3B30;
+            --risk-medium: #FF9500;
+            --risk-low: #34C759;
+            --text-main: #FFFFFF;
+            --text-secondary: #8E8E93;
+            --border-color: #2C2C2E;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            overflow-x: hidden;
+        }
+
+        /* Navigation */
+        nav {
+            position: sticky;
+            top: 0;
+            width: 100%;
+            height: 70px;
+            background: rgba(5, 5, 5, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 5%;
+            z-index: 1000;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -1px;
+            background: linear-gradient(135deg, #fff 0%, #888 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: var(--text-main);
+        }
+
+        .nav-links a.active {
+            position: relative;
+        }
+
+        .nav-links a.active::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--primary-color);
+            border-radius: 2px;
+        }
+
+        /* Container */
+        main {
+            padding: 4rem 5%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            margin-bottom: 3rem;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            letter-spacing: -1.5px;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-card {
+            background: var(--surface-color);
+            padding: 1.5rem;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary-color);
+        }
+
+        .stat-label {
+            display: block;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        /* History Table */
+        .history-container {
+            background: var(--surface-color);
+            border-radius: 24px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            padding: 1.25rem 1.5rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        td {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.95rem;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .risk-badge {
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            display: inline-block;
+        }
+
+        .risk-high {
+            background: rgba(255, 59, 48, 0.15);
+            color: var(--risk-high);
+        }
+
+        .risk-medium {
+            background: rgba(255, 149, 0, 0.15);
+            color: var(--risk-medium);
+        }
+
+        .risk-low {
+            background: rgba(52, 199, 89, 0.15);
+            color: var(--risk-low);
+        }
+
+        .coordinate-link {
+            color: var(--primary-color);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .coordinate-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Animations */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Empty State */
+        .empty-state {
+            padding: 4rem;
+            text-align: center;
+            color: var(--text-secondary);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav>
+        <div class="logo">Smart Cities Pro</div>
+        <div class="nav-links">
+            <a href="index.html">Live Map</a>
+            <a href="history.html" class="active">Risk History</a>
+            <a href="upload.html">Upload Analysis</a>
+        </div>
+    </nav>
+
+    <main>
+        <header>
+            <h1>Risk History</h1>
+            <p class="subtitle">Detailed log of all road friction assessments and safety metrics.</p>
+        </header>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="stat-label">Total Logs</span>
+                <div class="stat-value" id="total-logs">-</div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">High Risk Areas</span>
+                <div class="stat-value" style="color: var(--risk-high)" id="high-risk-count">-</div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Avg Friction</span>
+                <div class="stat-value" id="avg-friction">-</div>
+            </div>
+        </div>
+
+        <div class="history-container">
+            <table id="history-table">
+                <thead>
+                    <tr>
+                        <th>Location</th>
+                        <th>Friction coefficient</th>
+                        <th>Risk Level</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="history-body">
+                    <!-- Data will be injected here -->
+                </tbody>
+            </table>
+            <div id="loading" class="empty-state">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Fetching safety data...</p>
+            </div>
+            <div id="no-data" class="empty-state" style="display: none;">
+                <i class="fas fa-folder-open"></i>
+                <p>No assessment records found.</p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const API_URL = "http://127.0.0.1:8000/all-data";
+
+        async function fetchHistory() {
+            try {
+                const response = await fetch(API_URL);
+                const data = await response.json();
+
+                document.getElementById('loading').style.display = 'none';
+
+                if (data.length === 0) {
+                    document.getElementById('no-data').style.display = 'block';
+                    return;
+                }
+
+                const tbody = document.getElementById('history-body');
+                tbody.innerHTML = '';
+
+                let highRiskCount = 0;
+                let totalFriction = 0;
+
+                data.forEach(item => {
+                    totalFriction += item.friction;
+                    if (item.risk_level === "HIGH") highRiskCount++;
+
+                    const row = document.createElement('tr');
+                    const riskClass = `risk-${item.risk_level.toLowerCase()}`;
+
+                    row.innerHTML = `
+                    <td>
+                        <a href="index.html?lat=${item.latitude}&lng=${item.longitude}" class="coordinate-link">
+                            <i class="fas fa-location-dot"></i>
+                            ${item.latitude.toFixed(4)}, ${item.longitude.toFixed(4)}
+                        </a>
+                    </td>
+                    <td style="font-family: monospace; font-weight: 600;">
+                        ${item.friction.toFixed(3)}
+                    </td>
+                    <td>
+                        <span class="risk-badge ${riskClass}">${item.risk_level}</span>
+                    </td>
+                    <td style="color: var(--text-secondary)">
+                        <i class="fas fa-check-circle" style="color: var(--secondary-color); margin-right: 5px;"></i>
+                        Optimized
+                    </td>
+                `;
+                    tbody.appendChild(row);
+                });
+
+                // Update Stats
+                document.getElementById('total-logs').textContent = data.length;
+                document.getElementById('high-risk-count').textContent = highRiskCount;
+                document.getElementById('avg-friction').textContent = (totalFriction / data.length).toFixed(3);
+
+            } catch (error) {
+                console.error("Error fetching data:", error);
+                document.getElementById('loading').innerHTML = `
+                <i class="fas fa-exclamation-triangle" style="color: var(--risk-high)"></i>
+                <p>Failed to connect to backend.</p>
+            `;
+            }
+        }
+
+        fetchHistory();
+    </script>
+
+</body>
+
+</html>

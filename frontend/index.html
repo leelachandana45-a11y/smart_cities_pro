@@ -1,68 +1,361 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <title>Snow Road Risk Map</title>
 
-    <!-- Leaflet CSS -->
-    <link
-        rel="stylesheet"
-        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    />
+<head>
+    <title>Live Map | Smart Cities Pro</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Leaflet Routing Machine -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
 
     <style>
-        #map {
-            height: 100vh;
+        :root {
+            --bg-color: #050505;
+            --surface-color: #121212;
+            --primary-color: #007AFF;
+            --border-color: #2C2C2E;
+            --text-main: #FFFFFF;
+            --text-secondary: #8E8E93;
+            --risk-high: #FF3B30;
         }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            overflow: hidden;
+        }
+
+        #map {
+            height: calc(100vh - 70px);
+            width: 100%;
+            z-index: 1;
+        }
+
+        /* Navigation */
+        nav {
+            height: 70px;
+            background: rgba(5, 5, 5, 0.8);
+            backdrop-filter: blur(20px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 5%;
+            z-index: 1000;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -1px;
+            background: linear-gradient(135deg, #fff 0%, #888 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: var(--text-main);
+        }
+
+        .nav-links a.active {
+            position: relative;
+        }
+
+        .nav-links a.active::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--primary-color);
+            border-radius: 2px;
+        }
+
+        /* Routing Panel */
+        .routing-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 350px;
+            background: rgba(18, 18, 18, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            z-index: 2000;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            animation: slideRight 0.5s ease-out;
+        }
+
+        @keyframes slideRight {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        h2 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        .instructions {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+        }
+
+        .route-info {
+            display: none;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .risk-alert {
+            display: none;
+            background: rgba(255, 59, 48, 0.15);
+            border: 1px solid var(--risk-high);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-top: 1rem;
+            color: var(--risk-high);
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .btn-reroute {
+            display: block;
+            width: 100%;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.8rem;
+            border-radius: 10px;
+            margin-top: 1rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-reroute:hover {
+            background: #1982ff;
+        }
+
+        /* Map custom styling */
+        .leaflet-container {
+            background: #111 !important;
+        }
+
+        .leaflet-routing-container {
+            display: none;
+        }
+
+        /* Hide default LRM UI */
     </style>
 </head>
+
 <body>
 
-<div id="map"></div>
+    <nav>
+        <div class="logo">Smart Cities Pro</div>
+        <div class="nav-links">
+            <a href="index.html" class="active">Live Map</a>
+            <a href="history.html">Risk History</a>
+            <a href="upload.html">Upload Analysis</a>
+        </div>
+    </nav>
 
-<!-- Leaflet JS -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <div class="routing-panel">
+        <h2>Adaptive Routing</h2>
+        <p class="instructions">Right-click on the map to set <b>Start</b> and <b>Destination</b>. The system will
+            automatically avoid high-risk road segments.</p>
 
-<script>
-    // Initialize map
-    var map = L.map('map').setView([13.0827, 80.2707], 10);
+        <div id="route-stats" class="route-info">
+            <div style="font-size: 0.9rem; margin-bottom: 0.5rem;"><i class="fas fa-road"></i> Distance: <span
+                    id="dist">-</span></div>
+            <div style="font-size: 0.9rem;"><i class="fas fa-clock"></i> Est. Time: <span id="time">-</span></div>
+        </div>
 
-    // Add map tiles
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap'
-    }).addTo(map);
+        <div id="risk-warning" class="risk-alert">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span>High-risk segment detected! Recalculating safer route...</span>
+        </div>
+    </div>
 
-    // Fetch backend data
-    fetch("http://127.0.0.1:8000/all-data")
-        .then(response => response.json())
-        .then(data => {
+    <div id="map"></div>
 
-            data.forEach(point => {
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Leaflet Routing Machine JS -->
+    <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
 
-                let color;
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const lat = parseFloat(urlParams.get('lat')) || 13.0827;
+        const lng = parseFloat(urlParams.get('lng')) || 80.2707;
+        const zoom = urlParams.get('lat') ? 14 : 10;
 
-                if (point.risk_level === "HIGH") {
-                    color = "red";
-                } else if (point.risk_level === "MEDIUM") {
-                    color = "orange";
-                } else {
-                    color = "green";
-                }
+        var map = L.map('map').setView([lat, lng], zoom);
+        var riskPoints = [];
+        var routingControl = null;
+        var waypoints = [];
 
-                L.circleMarker([point.latitude, point.longitude], {
-                    radius: 8,
-                    color: color,
-                    fillOpacity: 0.8
-                })
-                .addTo(map)
-                .bindPopup(
-                    "Friction: " + point.friction.toFixed(2) +
-                    "<br>Risk: " + point.risk_level
-                );
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '© OpenStreetMap © CARTO'
+        }).addTo(map);
 
+        // Fetch Risk Data
+        fetch("http://127.0.0.1:8000/all-data")
+            .then(response => response.json())
+            .then(data => {
+                riskPoints = data;
+                data.forEach(point => {
+                    let color = point.risk_level === "HIGH" ? "#FF3B30" : (point.risk_level === "MEDIUM" ? "#FF9500" : "#34C759");
+                    L.circleMarker([point.latitude, point.longitude], {
+                        radius: 12, color: color, fillColor: color, fillOpacity: 0.4, weight: 2
+                    }).addTo(map);
+                });
             });
 
-        });
-</script>
+        // Initialize Routing
+        function initRouting() {
+            if (routingControl) {
+                map.removeControl(routingControl);
+            }
 
+            routingControl = L.Routing.control({
+                waypoints: waypoints,
+                lineOptions: {
+                    styles: [{ color: '#007AFF', opacity: 0.8, weight: 6 }]
+                },
+                createMarker: function (i, wp, n) {
+                    return L.marker(wp.latLng, {
+                        draggable: true,
+                        icon: L.divIcon({
+                            className: 'custom-icon',
+                            html: `<div style="background: ${i === 0 ? '#32D74B' : '#007AFF'}; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white;"></div>`
+                        })
+                    });
+                },
+                router: L.Routing.osrmv1({
+                    serviceUrl: 'https://router.project-osrm.org/route/v1'
+                })
+            }).on('routesfound', function (e) {
+                checkRiskCollision(e.routes[0]);
+                updateStats(e.routes[0]);
+            }).addTo(map);
+        }
+
+        // Check if route passes near any High Risk points
+        function checkRiskCollision(route) {
+            const warning = document.getElementById('risk-warning');
+            let collisionFound = false;
+
+            // Check every 5th point on the route for performance
+            const step = 5;
+            const collisionThreshold = 0.0005; // ~50 meters
+
+            for (let i = 0; i < route.coordinates.length; i += step) {
+                const rPoint = route.coordinates[i];
+
+                for (let point of riskPoints) {
+                    if (point.risk_level !== "HIGH") continue;
+
+                    const dLat = Math.abs(rPoint.lat - point.latitude);
+                    const dLng = Math.abs(rPoint.lng - point.longitude);
+
+                    if (dLat < collisionThreshold && dLng < collisionThreshold) {
+                        collisionFound = true;
+                        highlightRiskySegment(point);
+                        break;
+                    }
+                }
+                if (collisionFound) break;
+            }
+
+            if (collisionFound) {
+                warning.style.display = 'block';
+                autoReroute();
+            } else {
+                warning.style.display = 'none';
+            }
+        }
+
+        function highlightRiskySegment(riskPoint) {
+            L.circleMarker([riskPoint.latitude, riskPoint.longitude], {
+                radius: 25, color: '#FF3B30', fillColor: '#FF3B30', fillOpacity: 0.2, dashArray: '5, 10'
+            }).addTo(map).fadeOut = setTimeout(() => { }, 5000);
+        }
+
+        function autoReroute() {
+            // Simple rerouting strategy: Add a slight offset to the middle of the route if it's high risk
+            if (waypoints.length >= 2 && waypoints.length < 3) {
+                const start = waypoints[0];
+                const end = waypoints[1];
+
+                // Add an intermediate waypoint slightly offset from the midpoint
+                const midLat = (start.lat + end.lat) / 2 + 0.005;
+                const midLng = (start.lng + end.lng) / 2 + 0.005;
+
+                const newWps = [start, L.latLng(midLat, midLng), end];
+                routingControl.setWaypoints(newWps);
+                waypoints = newWps;
+            }
+        }
+
+        function updateStats(route) {
+            const stats = document.getElementById('route-stats');
+            stats.style.display = 'block';
+            document.getElementById('dist').textContent = (route.summary.totalDistance / 1000).toFixed(1) + ' km';
+            document.getElementById('time').textContent = Math.round(route.summary.totalTime / 60) + ' min';
+        }
+
+        // Interaction
+        map.on('contextmenu', function (e) {
+            if (waypoints.length >= 2) {
+                waypoints = [];
+                if (routingControl) map.removeControl(routingControl);
+                document.getElementById('route-stats').style.display = 'none';
+            }
+
+            waypoints.push(e.latlng);
+            L.marker(e.latlng).addTo(map).bindPopup(waypoints.length === 1 ? "Start" : "Destination").openPopup();
+
+            if (waypoints.length === 2) {
+                initRouting();
+            }
+        });
+
+    </script>
 </body>
+
 </html>
