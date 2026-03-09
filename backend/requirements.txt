@@ -3,3 +3,8 @@ uvicorn
 torch
 torchvision
 pillow
+requests
+pandas
+opencv-python
+scikit-learn
+matplotlib
